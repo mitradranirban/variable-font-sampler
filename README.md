@@ -1,6 +1,10 @@
    
 
-# Variable Font Sampler - a WordPress plugin for font sampling using the fontsampler.js library
+# Variable Font Sampler - 
+### A WordPress plugin for font sampling using the fontsampler.js library
+![Demo site](pics/vfs.png)
+
+## [View Demo](https://fontsampler.atipra.in)
 
 ## Key Features:
 
