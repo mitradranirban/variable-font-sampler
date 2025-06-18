@@ -3,11 +3,12 @@
  * Plugin Name: Variable Font Sampler
  * Plugin URI: https://mitradranirban.github.io/variable-font-sampler
  * Description: A WordPress plugin for showcasing variable fonts using fontsampler.js library with interactive controls.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Dr Anirban Mitra
- * License: GPL v2 or later
- * Text Domain: variable-font-sampler
+ * License: GPL v3 or later
+ * Text Domain: variable_font_sampler
  */
+
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -35,7 +36,7 @@ class VariableFontSampler {
     }
     
     public function init() {
-        load_plugin_textdomain('variable-font-sampler', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+        load_plugin_textdomain('variable_font_sampler', false, dirname(plugin_basename(__FILE__)) . '/languages/');
     }
     
     public function enqueue_scripts() {
@@ -99,7 +100,7 @@ class VariableFontSampler {
         $font_url = $atts['font'] ? $atts['font'] : get_option('vfs_default_font', '');
         
         if (empty($font_url)) {
-            return '<p>' . __('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable-font-sampler') . '</p>';
+            return '<p>' . esc_html__('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable_font_sampler') . '</p>';
         }
         
         ob_start();
@@ -118,28 +119,28 @@ class VariableFontSampler {
             <?php if ($atts['controls'] === 'true'): ?>
             <div class="font-sampler-controls">
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-size"><?php _e('Font Size:', 'variable-font-sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-size"><?php esc_html_e('Font Size:', 'variable_font_sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-size" 
                            class="size-control" min="12" max="120" value="<?php echo esc_attr($atts['size']); ?>">
                     <span class="size-value"><?php echo esc_html($atts['size']); ?>px</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-weight"><?php _e('Font Weight:', 'variable-font-sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-weight"><?php esc_html_e('Font Weight:', 'variable_font_sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-weight" 
                            class="weight-control" min="100" max="900" value="400" step="100">
                     <span class="weight-value">400</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-width"><?php _e('Font Width:', 'variable-font-sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-width"><?php esc_html_e('Font Width:', 'variable_font_sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-width" 
                            class="width-control" min="50" max="200" value="100">
                     <span class="width-value">100%</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-text"><?php _e('Sample Text:', 'variable-font-sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-text"><?php esc_html_e('Sample Text:', 'variable_font_sampler'); ?></label>
                     <input type="text" id="<?php echo esc_attr($atts['id']); ?>-text" 
                            class="text-control" value="<?php echo esc_attr($atts['text']); ?>">
                 </div>
@@ -152,8 +153,8 @@ class VariableFontSampler {
     
     public function add_admin_menu() {
         add_options_page(
-            __('Variable Font Sampler', 'variable-font-sampler'),
-            __('Font Sampler', 'variable-font-sampler'),
+            esc_html__('Variable Font Sampler', 'variable_font_sampler'),
+            esc_html__('Font Sampler', 'variable_font_sampler'),
             'manage_options',
             'variable-font-sampler',
             array($this, 'admin_page')
@@ -166,14 +167,14 @@ class VariableFontSampler {
         
         add_settings_section(
             'vfs_main_section',
-            __('Font Settings', 'variable-font-sampler'),
+            esc_html__('Font Settings', 'variable_font_sampler'),
             array($this, 'settings_section_callback'),
             'variable-font-sampler'
         );
         
         add_settings_field(
             'vfs_default_font',
-            __('Default Font URL', 'variable-font-sampler'),
+            esc_html__('Default Font URL', 'variable_font_sampler'),
             array($this, 'default_font_callback'),
             'variable-font-sampler',
             'vfs_main_section'
@@ -181,7 +182,7 @@ class VariableFontSampler {
         
         add_settings_field(
             'vfs_custom_fonts',
-            __('Custom Fonts', 'variable-font-sampler'),
+            esc_html__('Custom Fonts', 'variable_font_sampler'),
             array($this, 'custom_fonts_callback'),
             'variable-font-sampler',
             'vfs_main_section'
@@ -191,18 +192,18 @@ class VariableFontSampler {
     public function admin_page() {
         ?>
         <div class="wrap">
-            <h1><?php _e('Variable Font Sampler Settings', 'variable-font-sampler'); ?></h1>
+            <h1><?php esc_html_e('Variable Font Sampler Settings', 'variable_font_sampler'); ?></h1>
             
             <div class="usage-info">
-                <h3><?php _e('Usage Instructions', 'variable-font-sampler'); ?></h3>
-                <p><?php _e('Use the shortcode to display font samples:', 'variable-font-sampler'); ?></p>
+                <h3><?php esc_html_e('Usage Instructions', 'variable_font_sampler'); ?></h3>
+                <p><?php esc_html_e('Use the shortcode to display font samples:', 'variable_font_sampler'); ?></p>
                 <code>[font_sampler font="URL_TO_FONT" text="Sample text" size="32" controls="true"]</code>
-                <p><?php _e('Parameters:', 'variable-font-sampler'); ?></p>
+                <p><?php esc_html_e('Parameters:', 'variable_font_sampler'); ?></p>
                 <ul>
-                    <li><strong>font:</strong> <?php _e('URL to the variable font file (optional if default is set)', 'variable-font-sampler'); ?></li>
-                    <li><strong>text:</strong> <?php _e('Sample text to display (default: "The quick brown fox...")', 'variable-font-sampler'); ?></li>
-                    <li><strong>size:</strong> <?php _e('Initial font size in pixels (default: 32)', 'variable-font-sampler'); ?></li>
-                    <li><strong>controls:</strong> <?php _e('Show interactive controls (default: true)', 'variable-font-sampler'); ?></li>
+                    <li><strong>font:</strong> <?php esc_html_e('URL to the variable font file (optional if default is set)', 'variable_font_sampler'); ?></li>
+                    <li><strong>text:</strong> <?php esc_html_e('Sample text to display (default: "The quick brown fox...")', 'variable_font_sampler'); ?></li>
+                    <li><strong>size:</strong> <?php esc_html_e('Initial font size in pixels (default: 32)', 'variable_font_sampler'); ?></li>
+                    <li><strong>controls:</strong> <?php esc_html_e('Show interactive controls (default: true)', 'variable_font_sampler'); ?></li>
                 </ul>
             </div>
             
@@ -218,14 +219,14 @@ class VariableFontSampler {
     }
     
     public function settings_section_callback() {
-        echo '<p>' . __('Configure your variable font settings below.', 'variable-font-sampler') . '</p>';
+        echo '<p>' . esc_html__('Configure your variable font settings below.', 'variable_font_sampler') . '</p>';
     }
     
     public function default_font_callback() {
         $value = get_option('vfs_default_font', '');
         echo '<input type="url" name="vfs_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
-        echo '<button type="button" class="button upload-font-btn">' . __('Upload Font', 'variable-font-sampler') . '</button>';
-        echo '<p class="description">' . __('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable-font-sampler') . '</p>';
+        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable_font_sampler') . '</button>';
+        echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable_font_sampler') . '</p>';
     }
     
     public function custom_fonts_callback() {
@@ -241,19 +242,19 @@ class VariableFontSampler {
         }
         
         echo '</div>';
-        echo '<button type="button" class="button add-font-btn">' . __('Add Another Font', 'variable-font-sampler') . '</button>';
+        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable_font_sampler') . '</button>';
     }
     
     private function render_font_input($index, $font) {
         ?>
         <div class="font-input-group">
-            <input type="text" name="vfs_custom_fonts[<?php echo $index; ?>][name]" 
+            <input type="text" name="vfs_custom_fonts[<?php echo esc_attr($index); ?>][name]" 
                    value="<?php echo esc_attr($font['name']); ?>" 
-                   placeholder="<?php _e('Font Name', 'variable-font-sampler'); ?>" />
-            <input type="url" name="vfs_custom_fonts[<?php echo $index; ?>][url]" 
+                   placeholder="<?php esc_attr_e('Font Name', 'variable_font_sampler'); ?>" />
+            <input type="url" name="vfs_custom_fonts[<?php echo esc_attr($index); ?>][url]" 
                    value="<?php echo esc_attr($font['url']); ?>" 
-                   placeholder="<?php _e('Font URL', 'variable-font-sampler'); ?>" />
-            <button type="button" class="button remove-font-btn"><?php _e('Remove', 'variable-font-sampler'); ?></button>
+                   placeholder="<?php esc_attr_e('Font URL', 'variable_font_sampler'); ?>" />
+            <button type="button" class="button remove-font-btn"><?php esc_html_e('Remove', 'variable_font_sampler'); ?></button>
         </div>
         <?php
     }
@@ -417,14 +418,26 @@ jQuery(document).ready(function($) {
         // Weight control
         container.find(".weight-control").on("input", function() {
             var weight = $(this).val();
-            sample.css("font-weight", weight);
+            var width = container.find(".width-control").val() || 100;
+            
+            // Combine both weight and width in font-variation-settings
+            sample.css({
+                "font-weight": weight,
+                "font-variation-settings": "\\"wght\\" " + weight + ", \\"wdth\\" " + width
+            });
             container.find(".weight-value").text(weight);
         });
         
-        // Width control
+        // Width control (using font-stretch and font-variation-settings)
         container.find(".width-control").on("input", function() {
             var width = $(this).val();
-            sample.css("font-stretch", width + "%");
+            var weight = container.find(".weight-control").val() || 400;
+            
+            // Combine both weight and width in font-variation-settings
+            sample.css({
+                "font-stretch": width + "%",
+                "font-variation-settings": "\\"wght\\" " + weight + ", \\"wdth\\" " + width
+            });
             container.find(".width-value").text(width + "%");
         });
         
@@ -440,10 +453,21 @@ jQuery(document).ready(function($) {
         
         fontFace.load().then(function(loadedFont) {
             document.fonts.add(loadedFont);
-            element.css("font-family", "VariableFont, sans-serif");
+            element.css({
+                "font-family": "VariableFont, sans-serif",
+                "font-variation-settings": "\\"wght\\" 400, \\"wdth\\" 100"
+            });
+            
+            // Initialize with proper font-variation-settings
+            var container = element.closest(\'.font-sampler-container\');
+            var initialWeight = container.find(\'.weight-control\').val() || 400;
+            var initialWidth = container.find(\'.width-control\').val() || 100;
+            
+            element.css("font-variation-settings", "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth);
+            
         }).catch(function(error) {
             console.error("Font loading failed:", error);
-            element.before("<p style=\"color: red; font-size: 14px;\">Failed to load font: " + url + "</p>");
+            element.before("<p style=\\"color: red; font-size: 14px;\\">Failed to load font: " + url + "</p>");
         });
     }
 });
