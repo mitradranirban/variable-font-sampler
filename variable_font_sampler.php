@@ -3,7 +3,7 @@
  * Plugin Name: Variable Font Sampler
  * Plugin URI: https://mitradranirban.github.io/variable-font-sampler
  * Description: A WordPress plugin for showcasing variable fonts using fontsampler.js library with interactive controls.
- * Version: 1.1.0
+ * Version: 1.0.1
  * Author: Dr Anirban Mitra
  * License: GPL v3 or later
  * Text Domain: variable_font_sampler
@@ -40,20 +40,14 @@ class VariableFontSampler {
     }
     
     public function enqueue_scripts() {
-        // Enqueue fontsampler.js from CDN
-        wp_enqueue_script(
-            'fontsampler-js',
-            'https://cdnjs.cloudflare.com/ajax/libs/fontsampler/1.0.0/fontsampler.min.js',
-            array(),
-            '1.0.0',
-            true
-        );
+        // Instead of loading from CDN, we'll create our own fontsampler implementation
+        // This removes the external dependency issue
         
-        // Enqueue our custom script
+        // Enqueue our custom font sampler script (includes fontsampler functionality)
         wp_enqueue_script(
             'variable-font-sampler',
             $this->plugin_url . 'assets/js/font-sampler.js',
-            array('jquery', 'fontsampler-js'),
+            array('jquery'),
             '1.0.0',
             true
         );
@@ -162,8 +156,18 @@ class VariableFontSampler {
     }
     
     public function admin_init() {
-        register_setting('vfs_settings', 'vfs_default_font');
-        register_setting('vfs_settings', 'vfs_custom_fonts');
+        // Register settings with proper sanitization callbacks
+        register_setting('vfs_settings', 'vfs_default_font', array(
+            'type' => 'string',
+            'sanitize_callback' => array($this, 'sanitize_font_url'),
+            'default' => ''
+        ));
+        
+        register_setting('vfs_settings', 'vfs_custom_fonts', array(
+            'type' => 'array',
+            'sanitize_callback' => array($this, 'sanitize_custom_fonts'),
+            'default' => array()
+        ));
         
         add_settings_section(
             'vfs_main_section',
@@ -187,6 +191,67 @@ class VariableFontSampler {
             'variable-font-sampler',
             'vfs_main_section'
         );
+    }
+    
+    /**
+     * Sanitize font URL
+     */
+    public function sanitize_font_url($input) {
+        if (empty($input)) {
+            return '';
+        }
+        
+        $url = esc_url_raw($input);
+        
+        // Validate that it's a font file
+        $allowed_extensions = array('woff', 'woff2', 'ttf', 'otf', 'eot');
+        $parsed_url = wp_parse_url($url);
+        $file_extension = pathinfo($parsed_url['path'], PATHINFO_EXTENSION);
+        
+        if (!in_array(strtolower($file_extension), $allowed_extensions)) {
+            add_settings_error(
+                'vfs_default_font',
+                'invalid_font_url',
+                esc_html__('Invalid font file. Please upload a valid font file (.woff, .woff2, .ttf, .otf, .eot)', 'variable_font_sampler')
+            );
+            return get_option('vfs_default_font', '');
+        }
+        
+        return $url;
+    }
+    
+    /**
+     * Sanitize custom fonts array
+     */
+    public function sanitize_custom_fonts($input) {
+        if (!is_array($input)) {
+            return array();
+        }
+        
+        $sanitized = array();
+        $allowed_extensions = array('woff', 'woff2', 'ttf', 'otf', 'eot');
+        
+        foreach ($input as $font) {
+            if (!is_array($font) || empty($font['name']) || empty($font['url'])) {
+                continue;
+            }
+            
+            $name = sanitize_text_field($font['name']);
+            $url = esc_url_raw($font['url']);
+            
+            // Validate font URL
+            $parsed_url = wp_parse_url($url);
+            $file_extension = pathinfo($parsed_url['path'], PATHINFO_EXTENSION);
+            
+            if (in_array(strtolower($file_extension), $allowed_extensions)) {
+                $sanitized[] = array(
+                    'name' => $name,
+                    'url' => $url
+                );
+            }
+        }
+        
+        return $sanitized;
     }
     
     public function admin_page() {
@@ -449,12 +514,19 @@ jQuery(document).ready(function($) {
     });
     
     function loadFont(url, element) {
-        var fontFace = new FontFace("VariableFont", "url(" + url + ")");
+        // Check if FontFace API is supported
+        if (!window.FontFace) {
+            // Fallback for older browsers
+            loadFontFallback(url, element);
+            return;
+        }
+        
+        var fontFace = new FontFace("VariableFont-" + Date.now(), "url(" + url + ")");
         
         fontFace.load().then(function(loadedFont) {
             document.fonts.add(loadedFont);
             element.css({
-                "font-family": "VariableFont, sans-serif",
+                "font-family": loadedFont.family + ", sans-serif",
                 "font-variation-settings": "\\"wght\\" 400, \\"wdth\\" 100"
             });
             
@@ -467,8 +539,33 @@ jQuery(document).ready(function($) {
             
         }).catch(function(error) {
             console.error("Font loading failed:", error);
-            element.before("<p style=\\"color: red; font-size: 14px;\\">Failed to load font: " + url + "</p>");
+            loadFontFallback(url, element);
         });
+    }
+    
+    function loadFontFallback(url, element) {
+        // Fallback method using CSS @font-face
+        var fontFamily = "VariableFont-" + Date.now();
+        var style = document.createElement("style");
+        style.textContent = "@font-face { font-family: \\"" + fontFamily + "\\"; src: url(\\"" + url + "\\"); font-display: swap; }";
+        document.head.appendChild(style);
+        
+        element.css({
+            "font-family": fontFamily + ", sans-serif"
+        });
+        
+        // Add a small delay to ensure font is loaded
+        setTimeout(function() {
+            var container = element.closest(\'.font-sampler-container\');
+            var initialWeight = container.find(\'.weight-control\').val() || 400;
+            var initialWidth = container.find(\'.width-control\').val() || 100;
+            
+            element.css({
+                "font-weight": initialWeight,
+                "font-stretch": initialWidth + "%",
+                "font-variation-settings": "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth
+            });
+        }, 100);
     }
 });
         ';
