@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Variable Font Sampler
- * Plugin URI: https://mitradranirban.github.io/variable-font-sampler
- * Description: A WordPress plugin for showcasing variable fonts using fontsampler.js library with interactive controls.
+ * Plugin URI: https://github.com/mitradranirban/variable-font-sampler/
+ * Description: A WordPress plugin for showcasing variable fonts with interactive controls.
  * Version: 1.0.3
  * Author: Dr Anirban Mitra
  * License: GPL v3 or later
