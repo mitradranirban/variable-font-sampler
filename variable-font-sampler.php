@@ -23,6 +23,9 @@ class Varifosa_Sampler {
     private $plugin_upload_dir;
     private $plugin_upload_url;
     
+    // Plugin version constant for cache busting
+    const VERSION = '1.0.3';
+    
     public function __construct() {
         $this->plugin_url = plugin_dir_url(__FILE__);
         $this->plugin_path = plugin_dir_path(__FILE__);
@@ -68,13 +71,13 @@ class Varifosa_Sampler {
             'font-sampler',
             $plugin_upload_url . 'font-sampler.css',
             array(),
-            null
+            self::VERSION // Added version parameter
         );
         wp_enqueue_script(
             'font-sampler',
             $plugin_upload_url . 'font-sampler.js',
             array('jquery'),
-            null,
+            self::VERSION, // Added version parameter
             true
         );
         
@@ -103,7 +106,7 @@ class Varifosa_Sampler {
             'variable-font-sampler-admin',
             $plugin_upload_url . 'admin.js',
             array('jquery'),
-            null,
+            self::VERSION, // Added version parameter
             true
         );
     }
