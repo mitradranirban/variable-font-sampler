@@ -6,7 +6,7 @@
  * Version: 1.0.3
  * Author: Dr Anirban Mitra
  * License: GPL v3 or later
- * Text Domain: variable_font_sampler
+ * Text Domain: variable-font-sampler
  */
 
 // Prevent direct access
