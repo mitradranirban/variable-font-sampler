@@ -36,7 +36,7 @@ class VariableFontSampler {
     }
     
     public function init() {
-        load_plugin_textdomain('variable_font_sampler', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+        // load_plugin_textdomain() call removed
     }
     
     public function enqueue_scripts() {
