@@ -120,7 +120,7 @@ class Varifosa_Sampler {
         $font_url = $atts['font'] ? $atts['font'] : get_option('varifosa_default_font', '');
         
         if (empty($font_url)) {
-            return '<p>' . esc_html__('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable_font_sampler') . '</p>';
+            return '<p>' . esc_html__('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable-font-sampler') . '</p>';
         }
         
         ob_start();
@@ -139,28 +139,28 @@ class Varifosa_Sampler {
             <?php if ($atts['controls'] === 'true'): ?>
             <div class="font-sampler-controls">
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-size"><?php esc_html_e('Font Size:', 'variable_font_sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-size"><?php esc_html_e('Font Size:', 'variable-font-sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-size" 
                            class="size-control" min="12" max="120" value="<?php echo esc_attr($atts['size']); ?>">
                     <span class="size-value"><?php echo esc_html($atts['size']); ?>px</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-weight"><?php esc_html_e('Font Weight:', 'variable_font_sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-weight"><?php esc_html_e('Font Weight:', 'variable-font-sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-weight" 
                            class="weight-control" min="100" max="900" value="400" step="100">
                     <span class="weight-value">400</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-width"><?php esc_html_e('Font Width:', 'variable_font_sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-width"><?php esc_html_e('Font Width:', 'variable-font-sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-width" 
                            class="width-control" min="50" max="200" value="100">
                     <span class="width-value">100%</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="<?php echo esc_attr($atts['id']); ?>-text"><?php esc_html_e('Sample Text:', 'variable_font_sampler'); ?></label>
+                    <label for="<?php echo esc_attr($atts['id']); ?>-text"><?php esc_html_e('Sample Text:', 'variable-font-sampler'); ?></label>
                     <input type="text" id="<?php echo esc_attr($atts['id']); ?>-text" 
                            class="text-control" value="<?php echo esc_attr($atts['text']); ?>">
                 </div>
@@ -173,8 +173,8 @@ class Varifosa_Sampler {
     
     public function varifosa_add_admin_menu() {
         add_options_page(
-            esc_html__('Variable Font Sampler', 'variable_font_sampler'),
-            esc_html__('Font Sampler', 'variable_font_sampler'),
+            esc_html__('Variable Font Sampler', 'variable-font-sampler'),
+            esc_html__('Font Sampler', 'variable-font-sampler'),
             'manage_options',
             'variable-font-sampler',
             array($this, 'varifosa_admin_page')
@@ -197,14 +197,14 @@ class Varifosa_Sampler {
         
         add_settings_section(
             'varifosa_main_section',
-            esc_html__('Font Settings', 'variable_font_sampler'),
+            esc_html__('Font Settings', 'variable-font-sampler'),
             array($this, 'varifosa_settings_section_callback'),
             'variable-font-sampler'
         );
         
         add_settings_field(
             'varifosa_default_font',
-            esc_html__('Default Font URL', 'variable_font_sampler'),
+            esc_html__('Default Font URL', 'variable-font-sampler'),
             array($this, 'varifosa_default_font_callback'),
             'variable-font-sampler',
             'varifosa_main_section'
@@ -212,7 +212,7 @@ class Varifosa_Sampler {
         
         add_settings_field(
             'varifosa_custom_fonts',
-            esc_html__('Custom Fonts', 'variable_font_sampler'),
+            esc_html__('Custom Fonts', 'variable-font-sampler'),
             array($this, 'varifosa_custom_fonts_callback'),
             'variable-font-sampler',
             'varifosa_main_section'
@@ -238,7 +238,7 @@ class Varifosa_Sampler {
             add_settings_error(
                 'varifosa_default_font',
                 'invalid_font_url',
-                esc_html__('Invalid font file. Please upload a valid font file (.woff, .woff2, .ttf, .otf, .eot)', 'variable_font_sampler')
+                esc_html__('Invalid font file. Please upload a valid font file (.woff, .woff2, .ttf, .otf, .eot)', 'variable-font-sampler')
             );
             return get_option('varifosa_default_font', '');
         }
@@ -283,18 +283,18 @@ class Varifosa_Sampler {
     public function varifosa_admin_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Variable Font Sampler Settings', 'variable_font_sampler'); ?></h1>
+            <h1><?php esc_html_e('Variable Font Sampler Settings', 'variable-font-sampler'); ?></h1>
             
             <div class="usage-info">
-                <h3><?php esc_html_e('Usage Instructions', 'variable_font_sampler'); ?></h3>
-                <p><?php esc_html_e('Use the shortcode to display font samples:', 'variable_font_sampler'); ?></p>
+                <h3><?php esc_html_e('Usage Instructions', 'variable-font-sampler'); ?></h3>
+                <p><?php esc_html_e('Use the shortcode to display font samples:', 'variable-font-sampler'); ?></p>
                 <code>[font_sampler font="URL_TO_FONT" text="Sample text" size="32" controls="true"]</code>
-                <p><?php esc_html_e('Parameters:', 'variable_font_sampler'); ?></p>
+                <p><?php esc_html_e('Parameters:', 'variable-font-sampler'); ?></p>
                 <ul>
-                    <li><strong>font:</strong> <?php esc_html_e('URL to the variable font file (optional if default is set)', 'variable_font_sampler'); ?></li>
-                    <li><strong>text:</strong> <?php esc_html_e('Sample text to display (default: "The quick brown fox...")', 'variable_font_sampler'); ?></li>
-                    <li><strong>size:</strong> <?php esc_html_e('Initial font size in pixels (default: 32)', 'variable_font_sampler'); ?></li>
-                    <li><strong>controls:</strong> <?php esc_html_e('Show interactive controls (default: true)', 'variable_font_sampler'); ?></li>
+                    <li><strong>font:</strong> <?php esc_html_e('URL to the variable font file (optional if default is set)', 'variable-font-sampler'); ?></li>
+                    <li><strong>text:</strong> <?php esc_html_e('Sample text to display (default: "The quick brown fox...")', 'variable-font-sampler'); ?></li>
+                    <li><strong>size:</strong> <?php esc_html_e('Initial font size in pixels (default: 32)', 'variable-font-sampler'); ?></li>
+                    <li><strong>controls:</strong> <?php esc_html_e('Show interactive controls (default: true)', 'variable-font-sampler'); ?></li>
                 </ul>
             </div>
             
@@ -310,14 +310,14 @@ class Varifosa_Sampler {
     }
     
     public function varifosa_settings_section_callback() {
-        echo '<p>' . esc_html__('Configure your variable font settings below.', 'variable_font_sampler') . '</p>';
+        echo '<p>' . esc_html__('Configure your variable font settings below.', 'variable-font-sampler') . '</p>';
     }
     
     public function varifosa_default_font_callback() {
         $value = get_option('varifosa_default_font', '');
         echo '<input type="url" name="varifosa_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
-        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable_font_sampler'); ?></button>';
-        echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable_font_sampler') . '</p>';
+        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable-font-sampler'); ?></button>';
+        echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable-font-sampler') . '</p>';
     }
     
     public function varifosa_custom_fonts_callback() {
@@ -333,7 +333,7 @@ class Varifosa_Sampler {
         }
         
         echo '</div>';
-        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable_font_sampler'); ?></button>';
+        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable-font-sampler'); ?></button>';
     }
     
     private function varifosa_render_font_input($index, $font) {
@@ -341,11 +341,11 @@ class Varifosa_Sampler {
         <div class="font-input-group">
             <input type="text" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][name]" 
                    value="<?php echo esc_attr($font['name']); ?>" 
-                   placeholder="<?php esc_attr_e('Font Name', 'variable_font_sampler'); ?>" />
+                   placeholder="<?php esc_attr_e('Font Name', 'variable-font-sampler'); ?>" />
             <input type="url" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][url]" 
                    value="<?php echo esc_attr($font['url']); ?>" 
-                   placeholder="<?php esc_attr_e('Font URL', 'variable_font_sampler'); ?>" />
-            <button type="button" class="button remove-font-btn"><?php esc_html_e('Remove', 'variable_font_sampler'); ?></button>
+                   placeholder="<?php esc_attr_e('Font URL', 'variable-font-sampler'); ?>" />
+            <button type="button" class="button remove-font-btn"><?php esc_html_e('Remove', 'variable-font-sampler'); ?></button>
         </div>
         <?php
     }
