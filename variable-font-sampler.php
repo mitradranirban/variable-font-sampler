@@ -3,10 +3,12 @@
  * Plugin Name: Variable Font Sampler
  * Plugin URI: https://github.com/mitradranirban/variable-font-sampler/
  * Description: A WordPress plugin for showcasing variable fonts with interactive controls.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Dr Anirban Mitra
+ * Author URI: https://fonts.atipra.in
  * License: GPL v3 or later
  * Text Domain: variable-font-sampler
+ * Updated: 2025-07-03 14:19:48
  */
 
 // Prevent direct access
@@ -24,7 +26,7 @@ class Varifosa_Sampler {
     private $plugin_upload_url;
     
     // Plugin version constant for cache busting
-    const VERSION = '1.0.3';
+    const VERSION = '1.0.4';
     
     public function __construct() {
         $this->plugin_url = plugin_dir_url(__FILE__);
@@ -49,10 +51,6 @@ class Varifosa_Sampler {
         register_deactivation_hook(__FILE__, array($this, 'varifosa_deactivate'));
     }
     
-    public function varifosa_init() {
-        // load_plugin_textdomain() call removed
-    }
-    
     public function varifosa_enqueue_scripts() {
         // Enqueue our custom font sampler script and CSS from uploads directory
         $upload_dir = wp_upload_dir();
@@ -71,20 +69,24 @@ class Varifosa_Sampler {
             'font-sampler',
             $plugin_upload_url . 'font-sampler.css',
             array(),
-            self::VERSION // Added version parameter
+            self::VERSION
         );
         wp_enqueue_script(
             'font-sampler',
             $plugin_upload_url . 'font-sampler.js',
             array('jquery'),
-            self::VERSION, // Added version parameter
+            self::VERSION,
             true
         );
         
-        // Localize script for AJAX (if needed)
+        // Localize script with translations and AJAX data
         wp_localize_script('font-sampler', 'fontSampler', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('varifosa_font_sampler_nonce')
+            'nonce' => wp_create_nonce('varifosa_font_sampler_nonce'),
+            'i18n' => array(
+                'fontLoadError' => esc_html__('Failed to load the font. Please check if the font file is accessible.', 'variable-font-sampler'),
+                'invalidFont' => esc_html__('Invalid font file. Please upload a valid variable font.', 'variable-font-sampler')
+            )
         ));
     }
     
@@ -92,6 +94,7 @@ class Varifosa_Sampler {
         if ('settings_page_variable-font-sampler' !== $hook) {
             return;
         }
+        
         $upload_dir = wp_upload_dir();
         $plugin_upload_url = trailingslashit($upload_dir['baseurl']) . 'variable-font-sampler/';
         $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
@@ -106,7 +109,7 @@ class Varifosa_Sampler {
             'variable-font-sampler-admin',
             $plugin_upload_url . 'admin.js',
             array('jquery'),
-            self::VERSION, // Added version parameter
+            self::VERSION,
             true
         );
     }
@@ -120,10 +123,26 @@ class Varifosa_Sampler {
             'id' => uniqid('font-sampler-')
         ), $atts);
         
-        $font_url = $atts['font'] ? $atts['font'] : get_option('varifosa_default_font', '');
+        // Validate font URL
+        if (!empty($atts['font'])) {
+            $font_url = esc_url($atts['font'], array('http', 'https'));
+            if (empty($font_url)) {
+                return sprintf(
+                    '<div class="font-error">%s</div>',
+                    esc_html__('Invalid font URL provided.', 'variable-font-sampler')
+                );
+            }
+        } else {
+            return sprintf(
+                '<div class="font-error">%s</div>',
+                esc_html__('No font URL specified.', 'variable-font-sampler')
+            );
+        }
         
-        if (empty($font_url)) {
-            return '<p>' . esc_html__('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable-font-sampler') . '</p>';
+        // Sanitize size
+        $size = absint($atts['size']);
+        if ($size < 12 || $size > 120) {
+            $size = 32; // Default if outside valid range
         }
         
         ob_start();
@@ -133,7 +152,7 @@ class Varifosa_Sampler {
                 <div class="font-sample" 
                      data-font="<?php echo esc_url($font_url); ?>"
                      data-text="<?php echo esc_attr($atts['text']); ?>"
-                     data-size="<?php echo esc_attr($atts['size']); ?>"
+                     data-size="<?php echo esc_attr($size); ?>"
                      data-controls="<?php echo esc_attr($atts['controls']); ?>">
                     <?php echo esc_html($atts['text']); ?>
                 </div>
@@ -144,8 +163,8 @@ class Varifosa_Sampler {
                 <div class="control-group">
                     <label for="<?php echo esc_attr($atts['id']); ?>-size"><?php esc_html_e('Font Size:', 'variable-font-sampler'); ?></label>
                     <input type="range" id="<?php echo esc_attr($atts['id']); ?>-size" 
-                           class="size-control" min="12" max="120" value="<?php echo esc_attr($atts['size']); ?>">
-                    <span class="size-value"><?php echo esc_html($atts['size']); ?>px</span>
+                           class="size-control" min="12" max="120" value="<?php echo esc_attr($size); ?>">
+                    <span class="size-value"><?php echo esc_html($size); ?>px</span>
                 </div>
                 
                 <div class="control-group">
@@ -172,207 +191,6 @@ class Varifosa_Sampler {
         </div>
         <?php
         return ob_get_clean();
-    }
-    
-    public function varifosa_add_admin_menu() {
-        add_options_page(
-            esc_html__('Variable Font Sampler', 'variable-font-sampler'),
-            esc_html__('Font Sampler', 'variable-font-sampler'),
-            'manage_options',
-            'variable-font-sampler',
-            array($this, 'varifosa_admin_page')
-        );
-    }
-    
-    public function varifosa_admin_init() {
-        // Register settings with proper sanitization callbacks
-        register_setting('varifosa_settings', 'varifosa_default_font', array(
-            'type' => 'string',
-            'sanitize_callback' => array($this, 'varifosa_sanitize_font_url'),
-            'default' => ''
-        ));
-        
-        register_setting('varifosa_settings', 'varifosa_custom_fonts', array(
-            'type' => 'array',
-            'sanitize_callback' => array($this, 'varifosa_sanitize_custom_fonts'),
-            'default' => array()
-        ));
-        
-        add_settings_section(
-            'varifosa_main_section',
-            esc_html__('Font Settings', 'variable-font-sampler'),
-            array($this, 'varifosa_settings_section_callback'),
-            'variable-font-sampler'
-        );
-        
-        add_settings_field(
-            'varifosa_default_font',
-            esc_html__('Default Font URL', 'variable-font-sampler'),
-            array($this, 'varifosa_default_font_callback'),
-            'variable-font-sampler',
-            'varifosa_main_section'
-        );
-        
-        add_settings_field(
-            'varifosa_custom_fonts',
-            esc_html__('Custom Fonts', 'variable-font-sampler'),
-            array($this, 'varifosa_custom_fonts_callback'),
-            'variable-font-sampler',
-            'varifosa_main_section'
-        );
-    }
-    
-    /**
-     * Sanitize font URL
-     */
-    public function varifosa_sanitize_font_url($input) {
-        if (empty($input)) {
-            return '';
-        }
-        
-        $url = esc_url_raw($input);
-        
-        // Validate that it's a font file
-        $allowed_extensions = array('woff', 'woff2', 'ttf', 'otf', 'eot');
-        $parsed_url = wp_parse_url($url);
-        $file_extension = pathinfo($parsed_url['path'], PATHINFO_EXTENSION);
-        
-        if (!in_array(strtolower($file_extension), $allowed_extensions)) {
-            add_settings_error(
-                'varifosa_default_font',
-                'invalid_font_url',
-                esc_html__('Invalid font file. Please upload a valid font file (.woff, .woff2, .ttf, .otf, .eot)', 'variable-font-sampler')
-            );
-            return get_option('varifosa_default_font', '');
-        }
-        
-        return $url;
-    }
-    
-    /**
-     * Sanitize custom fonts array
-     */
-    public function varifosa_sanitize_custom_fonts($input) {
-        if (!is_array($input)) {
-            return array();
-        }
-        
-        $sanitized = array();
-        $allowed_extensions = array('woff', 'woff2', 'ttf', 'otf', 'eot');
-        
-        foreach ($input as $font) {
-            if (!is_array($font) || empty($font['name']) || empty($font['url'])) {
-                continue;
-            }
-            
-            $name = sanitize_text_field($font['name']);
-            $url = esc_url_raw($font['url']);
-            
-            // Validate font URL
-            $parsed_url = wp_parse_url($url);
-            $file_extension = pathinfo($parsed_url['path'], PATHINFO_EXTENSION);
-            
-            if (in_array(strtolower($file_extension), $allowed_extensions)) {
-                $sanitized[] = array(
-                    'name' => $name,
-                    'url' => $url
-                );
-            }
-        }
-        
-        return $sanitized;
-    }
-    
-    public function varifosa_admin_page() {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Variable Font Sampler Settings', 'variable-font-sampler'); ?></h1>
-            
-            <div class="usage-info">
-                <h3><?php esc_html_e('Usage Instructions', 'variable-font-sampler'); ?></h3>
-                <p><?php esc_html_e('Use the shortcode to display font samples:', 'variable-font-sampler'); ?></p>
-                <code>[font_sampler font="URL_TO_FONT" text="Sample text" size="32" controls="true"]</code>
-                <p><?php esc_html_e('Parameters:', 'variable-font-sampler'); ?></p>
-                <ul>
-                    <li><strong>font:</strong> <?php esc_html_e('URL to the variable font file (optional if default is set)', 'variable-font-sampler'); ?></li>
-                    <li><strong>text:</strong> <?php esc_html_e('Sample text to display (default: "The quick brown fox...")', 'variable-font-sampler'); ?></li>
-                    <li><strong>size:</strong> <?php esc_html_e('Initial font size in pixels (default: 32)', 'variable-font-sampler'); ?></li>
-                    <li><strong>controls:</strong> <?php esc_html_e('Show interactive controls (default: true)', 'variable-font-sampler'); ?></li>
-                </ul>
-            </div>
-            
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('varifosa_settings');
-                do_settings_sections('variable-font-sampler');
-                submit_button();
-                ?>
-            </form>
-        </div>
-        <?php
-    }
-    
-    public function varifosa_settings_section_callback() {
-        echo '<p>' . esc_html__('Configure your variable font settings below.', 'variable-font-sampler') . '</p>';
-    }
-    
-    public function varifosa_default_font_callback() {
-        $value = get_option('varifosa_default_font', '');
-        echo '<input type="url" name="varifosa_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
-        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable-font-sampler'); ?></button>';
-        echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable-font-sampler') . '</p>';
-    }
-    
-    public function varifosa_custom_fonts_callback() {
-        $fonts = get_option('varifosa_custom_fonts', array());
-        echo '<div id="custom-fonts-container">';
-        
-        if (!empty($fonts)) {
-            foreach ($fonts as $index => $font) {
-                $this->varifosa_render_font_input($index, $font);
-            }
-        } else {
-            $this->varifosa_render_font_input(0, array('name' => '', 'url' => ''));
-        }
-        
-        echo '</div>';
-        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable-font-sampler'); ?></button>';
-    }
-    
-    private function varifosa_render_font_input($index, $font) {
-        ?>
-        <div class="font-input-group">
-            <input type="text" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][name]" 
-                   value="<?php echo esc_attr($font['name']); ?>" 
-                   placeholder="<?php esc_attr_e('Font Name', 'variable-font-sampler'); ?>" />
-            <input type="url" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][url]" 
-                   value="<?php echo esc_attr($font['url']); ?>" 
-                   placeholder="<?php esc_attr_e('Font URL', 'variable-font-sampler'); ?>" />
-            <button type="button" class="button remove-font-btn"><?php esc_html_e('Remove', 'variable-font-sampler'); ?></button>
-        </div>
-        <?php
-    }
-    
-    public function varifosa_activate() {
-        // Create uploads directory structure
-        $upload_dir = wp_upload_dir();
-        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
-        if (!file_exists($plugin_upload_dir)) {
-            wp_mkdir_p($plugin_upload_dir);
-        }
-        
-        // Create CSS file
-        $this->varifosa_create_css_file();
-        
-        // Create JS file
-        $this->varifosa_create_js_file();
-        
-        // Create admin JS file
-        $this->varifosa_create_admin_js_file();
-    }
-    
-    public function varifosa_deactivate() {
-        // Clean up if needed
     }
     
     private function varifosa_create_css_file() {
@@ -444,42 +262,21 @@ class Varifosa_Sampler {
     text-align: center;
 }
 
-.font-input-group {
-    display: flex;
-    gap: 10px;
+.font-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
     margin-bottom: 10px;
-    align-items: center;
-}
-
-.font-input-group input {
-    flex: 1;
-    padding: 8px;
-}
-
-.usage-info {
-    background: #f0f8ff;
-    padding: 15px;
-    border-left: 4px solid #0073aa;
-    margin-bottom: 20px;
-}
-
-.usage-info code {
-    background: #f1f1f1;
-    padding: 2px 4px;
-    border-radius: 3px;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    text-align: center;
 }
 
 @media (max-width: 768px) {
     .font-sampler-controls {
         grid-template-columns: 1fr;
     }
-    
-    .font-input-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-}
-        ';
+}';
         
         file_put_contents($plugin_upload_dir . 'font-sampler.css', $css_content);
     }
@@ -500,9 +297,14 @@ jQuery(document).ready(function($) {
         var fontUrl = sample.data("font");
         
         if (fontUrl) {
-            loadFont(fontUrl, sample);
+            loadFont(fontUrl, sample).catch(function(error) {
+                console.error("Font loading failed:", error);
+                sample.before(\'<div class="font-error">\' + 
+                    fontSampler.i18n.fontLoadError + 
+                    \'</div>\');
+            });
         }
-        
+
         // Size control
         container.find(".size-control").on("input", function() {
             var size = $(this).val();
@@ -515,7 +317,6 @@ jQuery(document).ready(function($) {
             var weight = $(this).val();
             var width = container.find(".width-control").val() || 100;
             
-            // Combine both weight and width in font-variation-settings
             sample.css({
                 "font-weight": weight,
                 "font-variation-settings": "\\"wght\\" " + weight + ", \\"wdth\\" " + width
@@ -523,12 +324,11 @@ jQuery(document).ready(function($) {
             container.find(".weight-value").text(weight);
         });
         
-        // Width control (using font-stretch and font-variation-settings)
+        // Width control
         container.find(".width-control").on("input", function() {
             var width = $(this).val();
             var weight = container.find(".weight-control").val() || 400;
             
-            // Combine both weight and width in font-variation-settings
             sample.css({
                 "font-stretch": width + "%",
                 "font-variation-settings": "\\"wght\\" " + weight + ", \\"wdth\\" " + width
@@ -543,138 +343,89 @@ jQuery(document).ready(function($) {
         });
     });
     
-    function loadFont(url, element) {
-        // Check if FontFace API is supported
-        if (!window.FontFace) {
-            // Fallback for older browsers
-            loadFontFallback(url, element);
-            return;
-        }
-        
-        var fontFace = new FontFace("VariableFont-" + Date.now(), "url(" + url + ")");
-        
-        fontFace.load().then(function(loadedFont) {
+    async function loadFont(url, element) {
+        try {
+            if (!window.FontFace) {
+                throw new Error("FontFace API not supported");
+            }
+            
+            const fontFace = new FontFace("VariableFont-" + Date.now(), "url(" + url + ")");
+            const loadedFont = await fontFace.load();
             document.fonts.add(loadedFont);
+            
             element.css({
                 "font-family": loadedFont.family + ", sans-serif",
                 "font-variation-settings": "\\"wght\\" 400, \\"wdth\\" 100"
             });
             
-            // Initialize with proper font-variation-settings
-            var container = element.closest(\'.font-sampler-container\');
-            var initialWeight = container.find(\'.weight-control\').val() || 400;
-            var initialWidth = container.find(\'.width-control\').val() || 100;
+            const container = element.closest(".font-sampler-container");
+            const initialWeight = container.find(".weight-control").val() || 400;
+            const initialWidth = container.find(".width-control").val() || 100;
             
-            element.css("font-variation-settings", "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth);
-            
-        }).catch(function(error) {
-            console.error("Font loading failed:", error);
-            loadFontFallback(url, element);
-        });
+            element.css("font-variation-settings", 
+                "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth);
+                
+        } catch (error) {
+            await loadFontFallback(url, element);
+        }
     }
     
     function loadFontFallback(url, element) {
-        // Fallback method using CSS @font-face
-        var fontFamily = "VariableFont-" + Date.now();
-        var style = document.createElement("style");
-        style.textContent = "@font-face { font-family: \\"" + fontFamily + "\\"; src: url(\\"" + url + "\\"); font-display: swap; }";
-        document.head.appendChild(style);
-        
-        element.css({
-            "font-family": fontFamily + ", sans-serif"
-        });
-        
-        // Add a small delay to ensure font is loaded
-        setTimeout(function() {
-            var container = element.closest(\'.font-sampler-container\');
-            var initialWeight = container.find(\'.weight-control\').val() || 400;
-            var initialWidth = container.find(\'.width-control\').val() || 100;
+        return new Promise((resolve, reject) => {
+            const fontFamily = "VariableFont-" + Date.now();
+            const style = document.createElement("style");
+            style.textContent = 
+                "@font-face { " +
+                "font-family: \\"" + fontFamily + "\\"; " +
+                "src: url(\\"" + url + "\\"); " +
+                "font-display: swap; " +
+                "}";
+            document.head.appendChild(style);
             
             element.css({
-                "font-weight": initialWeight,
-                "font-stretch": initialWidth + "%",
-                "font-variation-settings": "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth
+                "font-family": fontFamily + ", sans-serif"
             });
-        }, 100);
+            
+            setTimeout(function() {
+                const container = element.closest(".font-sampler-container");
+                const initialWeight = container.find(".weight-control").val() || 400;
+                const initialWidth = container.find(".width-control").val() || 100;
+                
+                element.css({
+                    "font-weight": initialWeight,
+                    "font-stretch": initialWidth + "%",
+                    "font-variation-settings": 
+                        "\\"wght\\" " + initialWeight + ", \\"wdth\\" " + initialWidth
+                });
+                resolve();
+            }, 100);
+        });
     }
-});
-        ';
+});';
         
         file_put_contents($plugin_upload_dir . 'font-sampler.js', $js_content);
     }
     
-    private function varifosa_create_admin_js_file() {
+    public function varifosa_activate() {
+        // Create uploads directory structure
         $upload_dir = wp_upload_dir();
         $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
         if (!file_exists($plugin_upload_dir)) {
             wp_mkdir_p($plugin_upload_dir);
         }
         
-        $admin_js_content = '
-jQuery(document).ready(function($) {
-    var mediaUploader;
+        // Create CSS file
+        $this->varifosa_create_css_file();
+        
+        // Create JS file
+        $this->varifosa_create_js_file();
+    }
     
-    // Font upload button
-    $(".upload-font-btn").on("click", function(e) {
-        e.preventDefault();
-        
-        var button = $(this);
-        var input = button.prev("input");
-        
-        if (mediaUploader) {
-            mediaUploader.open();
-            return;
-        }
-        
-        mediaUploader = wp.media({
-            title: "Choose Font File",
-            button: {
-                text: "Use this font"
-            },
-            multiple: false,
-            library: {
-                type: ["application/font-woff", "application/font-woff2", "font/woff", "font/woff2", "application/x-font-ttf"]
-            }
-        });
-        
-        mediaUploader.on("select", function() {
-            var attachment = mediaUploader.state().get("selection").first().toJSON();
-            input.val(attachment.url);
-        });
-        
-        mediaUploader.open();
-    });
-    
-    // Add font button
-    var fontIndex = $("#custom-fonts-container .font-input-group").length;
-    
-    $(".add-font-btn").on("click", function() {
-        var newFontGroup = `
-            <div class="font-input-group">
-                <input type="text" name="varifosa_custom_fonts[${fontIndex}][name]" 
-                       placeholder="Font Name" />
-                <input type="url" name="varifosa_custom_fonts[${fontIndex}][url]" 
-                       placeholder="Font URL" />
-                <button type="button" class="button remove-font-btn">Remove</button>
-            </div>
-        `;
-        
-        $("#custom-fonts-container").append(newFontGroup);
-        fontIndex++;
-    });
-    
-    // Remove font button
-    $(document).on("click", ".remove-font-btn", function() {
-        $(this).closest(".font-input-group").remove();
-    });
-});
-        ';
-        
-        file_put_contents($plugin_upload_dir . 'admin.js', $admin_js_content);
+    public function varifosa_deactivate() {
+        // Cleanup tasks if needed
     }
 }
 
 // Initialize the plugin
 new Varifosa_Sampler();
-
 ?>
