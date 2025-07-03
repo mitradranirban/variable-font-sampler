@@ -70,6 +70,11 @@ Visit the <a href="https://github.com/mitradranirban/variable-font-sampler">plug
 - Activate the plugin 
 
 == Changelog ==
+= 1.0.2 (03 July 2025)
+* requires php bumped to 7.0 (issue#1)
+* load_plugin_textdomain removed (issue#2)
+* generic functions prefixed with varifosa_(issue#3)
+* files uploaded to uploads folder instead of plugin folder and linked from there (issue#4)
 = 1.0.1 (18 June 2025)=
 * Corrected escape errors 
 = 1.0.0 (17 June 2025) =
