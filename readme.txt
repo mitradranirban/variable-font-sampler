@@ -4,7 +4,7 @@ Tags: fonts, font preview, variable font, font foundry. fontsampler
 Requires at least: 5.7
 Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv3 or later 
 License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -70,6 +70,13 @@ Visit the <a href="https://github.com/mitradranirban/variable-font-sampler">plug
 - Activate the plugin 
 
 == Changelog ==
+= 1.0.4 (03 July 2025)
+* Removes all "default font" and "additional fonts" settings and code.
+* Admin interface now only provides usage instructions and a font upload (to the Media Library) button,   displaying the uploaded font URL for the shortcode.
+* Shortcode requires the font attribute; no fallback to defaults.
+* JavaScript only manages a single font upload.
+= 1.0.3 (3 July 2025) =
+* Added Version tag to bust browser cache 
 = 1.0.2 (03 July 2025)
 * requires php bumped to 7.0 (issue#1)
 * load_plugin_textdomain removed (issue#2)
