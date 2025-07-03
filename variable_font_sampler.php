@@ -3,12 +3,11 @@
  * Plugin Name: Variable Font Sampler
  * Plugin URI: https://mitradranirban.github.io/variable-font-sampler
  * Description: A WordPress plugin for showcasing variable fonts using fontsampler.js library with interactive controls.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Dr Anirban Mitra
  * License: GPL v3 or later
  * Text Domain: variable_font_sampler
  */
-
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -19,10 +18,22 @@ class Varifosa_Sampler {
     
     private $plugin_url;
     private $plugin_path;
+
+    // Uploads directory (for generated assets)
+    private $plugin_upload_dir;
+    private $plugin_upload_url;
     
     public function __construct() {
         $this->plugin_url = plugin_dir_url(__FILE__);
         $this->plugin_path = plugin_dir_path(__FILE__);
+
+        // Setup uploads directory paths/urls for assets
+        $upload_dir = wp_upload_dir();
+        $this->plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
+        $this->plugin_upload_url = trailingslashit($upload_dir['baseurl']) . 'variable-font-sampler/';
+        if (!file_exists($this->plugin_upload_dir)) {
+            wp_mkdir_p($this->plugin_upload_dir);
+        }
         
         add_action('init', array($this, 'varifosa_init'));
         add_action('wp_enqueue_scripts', array($this, 'varifosa_enqueue_scripts'));
@@ -40,28 +51,35 @@ class Varifosa_Sampler {
     }
     
     public function varifosa_enqueue_scripts() {
-        // Instead of loading from CDN, we'll create our own fontsampler implementation
-        // This removes the external dependency issue
+        // Enqueue our custom font sampler script and CSS from uploads directory
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_url = trailingslashit($upload_dir['baseurl']) . 'variable-font-sampler/';
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
         
-        // Enqueue our custom font sampler script (includes fontsampler functionality)
+        // Ensure files exist (in case activation did not run)
+        if (!file_exists($plugin_upload_dir . 'font-sampler.css')) {
+            $this->varifosa_create_css_file();
+        }
+        if (!file_exists($plugin_upload_dir . 'font-sampler.js')) {
+            $this->varifosa_create_js_file();
+        }
+
+        wp_enqueue_style(
+            'font-sampler',
+            $plugin_upload_url . 'font-sampler.css',
+            array(),
+            null
+        );
         wp_enqueue_script(
-            'variable-font-sampler',
-            $this->plugin_url . 'assets/js/font-sampler.js',
+            'font-sampler',
+            $plugin_upload_url . 'font-sampler.js',
             array('jquery'),
-            '1.0.0',
+            null,
             true
         );
         
-        // Enqueue CSS
-        wp_enqueue_style(
-            'variable-font-sampler-css',
-            $this->plugin_url . 'assets/css/font-sampler.css',
-            array(),
-            '1.0.0'
-        );
-        
-        // Localize script for AJAX
-        wp_localize_script('variable-font-sampler', 'fontSampler', array(
+        // Localize script for AJAX (if needed)
+        wp_localize_script('font-sampler', 'fontSampler', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('varifosa_font_sampler_nonce')
         ));
@@ -71,13 +89,21 @@ class Varifosa_Sampler {
         if ('settings_page_variable-font-sampler' !== $hook) {
             return;
         }
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_url = trailingslashit($upload_dir['baseurl']) . 'variable-font-sampler/';
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
         
+        // Ensure admin.js file exists
+        if (!file_exists($plugin_upload_dir . 'admin.js')) {
+            $this->varifosa_create_admin_js_file();
+        }
+
         wp_enqueue_media();
         wp_enqueue_script(
             'variable-font-sampler-admin',
-            $this->plugin_url . 'assets/js/admin.js',
+            $plugin_upload_url . 'admin.js',
             array('jquery'),
-            '1.0.0',
+            null,
             true
         );
     }
@@ -290,7 +316,7 @@ class Varifosa_Sampler {
     public function varifosa_default_font_callback() {
         $value = get_option('varifosa_default_font', '');
         echo '<input type="url" name="varifosa_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
-        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable_font_sampler') . '</button>';
+        echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable_font_sampler'); ?></button>';
         echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable_font_sampler') . '</p>';
     }
     
@@ -307,7 +333,7 @@ class Varifosa_Sampler {
         }
         
         echo '</div>';
-        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable_font_sampler') . '</button>';
+        echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable_font_sampler'); ?></button>';
     }
     
     private function varifosa_render_font_input($index, $font) {
@@ -325,12 +351,11 @@ class Varifosa_Sampler {
     }
     
     public function varifosa_activate() {
-        // Create assets directory structure
+        // Create uploads directory structure
         $upload_dir = wp_upload_dir();
-        $font_dir = $upload_dir['basedir'] . '/variable-fonts/';
-        
-        if (!file_exists($font_dir)) {
-            wp_mkdir_p($font_dir);
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
+        if (!file_exists($plugin_upload_dir)) {
+            wp_mkdir_p($plugin_upload_dir);
         }
         
         // Create CSS file
@@ -348,9 +373,10 @@ class Varifosa_Sampler {
     }
     
     private function varifosa_create_css_file() {
-        $css_dir = $this->plugin_path . 'assets/css/';
-        if (!file_exists($css_dir)) {
-            wp_mkdir_p($css_dir);
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
+        if (!file_exists($plugin_upload_dir)) {
+            wp_mkdir_p($plugin_upload_dir);
         }
         
         $css_content = '
@@ -452,13 +478,14 @@ class Varifosa_Sampler {
 }
         ';
         
-        file_put_contents($css_dir . 'font-sampler.css', $css_content);
+        file_put_contents($plugin_upload_dir . 'font-sampler.css', $css_content);
     }
     
     private function varifosa_create_js_file() {
-        $js_dir = $this->plugin_path . 'assets/js/';
-        if (!file_exists($js_dir)) {
-            wp_mkdir_p($js_dir);
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
+        if (!file_exists($plugin_upload_dir)) {
+            wp_mkdir_p($plugin_upload_dir);
         }
         
         $js_content = '
@@ -570,13 +597,14 @@ jQuery(document).ready(function($) {
 });
         ';
         
-        file_put_contents($js_dir . 'font-sampler.js', $js_content);
+        file_put_contents($plugin_upload_dir . 'font-sampler.js', $js_content);
     }
     
     private function varifosa_create_admin_js_file() {
-        $js_dir = $this->plugin_path . 'assets/js/';
-        if (!file_exists($js_dir)) {
-            wp_mkdir_p($js_dir);
+        $upload_dir = wp_upload_dir();
+        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
+        if (!file_exists($plugin_upload_dir)) {
+            wp_mkdir_p($plugin_upload_dir);
         }
         
         $admin_js_content = '
@@ -639,7 +667,7 @@ jQuery(document).ready(function($) {
 });
         ';
         
-        file_put_contents($js_dir . 'admin.js', $admin_js_content);
+        file_put_contents($plugin_upload_dir . 'admin.js', $admin_js_content);
     }
 }
 
