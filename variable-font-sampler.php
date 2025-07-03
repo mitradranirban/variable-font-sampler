@@ -20,8 +20,6 @@ class Varifosa_Sampler {
     
     private $plugin_url;
     private $plugin_path;
-
-    // Uploads directory (for generated assets)
     private $plugin_upload_dir;
     private $plugin_upload_url;
     
@@ -42,13 +40,15 @@ class Varifosa_Sampler {
         
         add_action('init', array($this, 'varifosa_init'));
         add_action('wp_enqueue_scripts', array($this, 'varifosa_enqueue_scripts'));
-        add_action('admin_enqueue_scripts', array($this, 'varifosa_admin_enqueue_scripts'));
         add_shortcode('font_sampler', array($this, 'varifosa_font_sampler_shortcode'));
-        add_action('admin_menu', array($this, 'varifosa_add_admin_menu'));
-        add_action('admin_init', array($this, 'varifosa_admin_init'));
         
         register_activation_hook(__FILE__, array($this, 'varifosa_activate'));
         register_deactivation_hook(__FILE__, array($this, 'varifosa_deactivate'));
+    }
+    
+    public function varifosa_init() {
+        // Initialize plugin
+        load_plugin_textdomain('variable-font-sampler', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
     
     public function varifosa_enqueue_scripts() {
@@ -79,39 +79,13 @@ class Varifosa_Sampler {
             true
         );
         
-        // Localize script with translations and AJAX data
+        // Localize script with translations
         wp_localize_script('font-sampler', 'fontSampler', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('varifosa_font_sampler_nonce'),
             'i18n' => array(
                 'fontLoadError' => esc_html__('Failed to load the font. Please check if the font file is accessible.', 'variable-font-sampler'),
                 'invalidFont' => esc_html__('Invalid font file. Please upload a valid variable font.', 'variable-font-sampler')
             )
         ));
-    }
-    
-    public function varifosa_admin_enqueue_scripts($hook) {
-        if ('settings_page_variable-font-sampler' !== $hook) {
-            return;
-        }
-        
-        $upload_dir = wp_upload_dir();
-        $plugin_upload_url = trailingslashit($upload_dir['baseurl']) . 'variable-font-sampler/';
-        $plugin_upload_dir = trailingslashit($upload_dir['basedir']) . 'variable-font-sampler/';
-        
-        // Ensure admin.js file exists
-        if (!file_exists($plugin_upload_dir . 'admin.js')) {
-            $this->varifosa_create_admin_js_file();
-        }
-
-        wp_enqueue_media();
-        wp_enqueue_script(
-            'variable-font-sampler-admin',
-            $plugin_upload_url . 'admin.js',
-            array('jquery'),
-            self::VERSION,
-            true
-        );
     }
     
     public function varifosa_font_sampler_shortcode($atts) {

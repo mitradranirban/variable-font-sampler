@@ -71,11 +71,9 @@ Visit the <a href="https://github.com/mitradranirban/variable-font-sampler">plug
 
 == Changelog ==
 = 1.0.4 (03 July 2025)
-* Removes all "default font" and "additional fonts" settings and code.
-* Admin interface now only provides usage instructions and a font upload (to the Media Library) button,   displaying the uploaded font URL for the shortcode.
-* Shortcode requires the font attribute; no fallback to defaults.
-* JavaScript only manages a single font upload.
-= 1.0.3 (3 July 2025) =
+* Removes all Admin interface code
+* Shortcode requires the font attribute; no fallback to defaults. 
+= 1.0.3 (03 July 2025) =
 * Added Version tag to bust browser cache 
 = 1.0.2 (03 July 2025)
 * requires php bumped to 7.0 (issue#1)
