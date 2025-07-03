@@ -3,7 +3,7 @@
  * Plugin Name: Variable Font Sampler
  * Plugin URI: https://mitradranirban.github.io/variable-font-sampler
  * Description: A WordPress plugin for showcasing variable fonts using fontsampler.js library with interactive controls.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Dr Anirban Mitra
  * License: GPL v3 or later
  * Text Domain: variable_font_sampler
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class VariableFontSampler {
+class Varifosa_Sampler {
     
     private $plugin_url;
     private $plugin_path;
@@ -24,22 +24,22 @@ class VariableFontSampler {
         $this->plugin_url = plugin_dir_url(__FILE__);
         $this->plugin_path = plugin_dir_path(__FILE__);
         
-        add_action('init', array($this, 'init'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-        add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'));
-        add_shortcode('font_sampler', array($this, 'font_sampler_shortcode'));
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'admin_init'));
+        add_action('init', array($this, 'varifosa_init'));
+        add_action('wp_enqueue_scripts', array($this, 'varifosa_enqueue_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'varifosa_admin_enqueue_scripts'));
+        add_shortcode('font_sampler', array($this, 'varifosa_font_sampler_shortcode'));
+        add_action('admin_menu', array($this, 'varifosa_add_admin_menu'));
+        add_action('admin_init', array($this, 'varifosa_admin_init'));
         
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        register_activation_hook(__FILE__, array($this, 'varifosa_activate'));
+        register_deactivation_hook(__FILE__, array($this, 'varifosa_deactivate'));
     }
     
-    public function init() {
+    public function varifosa_init() {
         // load_plugin_textdomain() call removed
     }
     
-    public function enqueue_scripts() {
+    public function varifosa_enqueue_scripts() {
         // Instead of loading from CDN, we'll create our own fontsampler implementation
         // This removes the external dependency issue
         
@@ -63,11 +63,11 @@ class VariableFontSampler {
         // Localize script for AJAX
         wp_localize_script('variable-font-sampler', 'fontSampler', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('font_sampler_nonce')
+            'nonce' => wp_create_nonce('varifosa_font_sampler_nonce')
         ));
     }
     
-    public function admin_enqueue_scripts($hook) {
+    public function varifosa_admin_enqueue_scripts($hook) {
         if ('settings_page_variable-font-sampler' !== $hook) {
             return;
         }
@@ -82,7 +82,7 @@ class VariableFontSampler {
         );
     }
     
-    public function font_sampler_shortcode($atts) {
+    public function varifosa_font_sampler_shortcode($atts) {
         $atts = shortcode_atts(array(
             'font' => '',
             'text' => 'The quick brown fox jumps over the lazy dog',
@@ -91,7 +91,7 @@ class VariableFontSampler {
             'id' => uniqid('font-sampler-')
         ), $atts);
         
-        $font_url = $atts['font'] ? $atts['font'] : get_option('vfs_default_font', '');
+        $font_url = $atts['font'] ? $atts['font'] : get_option('varifosa_default_font', '');
         
         if (empty($font_url)) {
             return '<p>' . esc_html__('No font specified. Please add a font URL or set a default font in the plugin settings.', 'variable_font_sampler') . '</p>';
@@ -145,58 +145,58 @@ class VariableFontSampler {
         return ob_get_clean();
     }
     
-    public function add_admin_menu() {
+    public function varifosa_add_admin_menu() {
         add_options_page(
             esc_html__('Variable Font Sampler', 'variable_font_sampler'),
             esc_html__('Font Sampler', 'variable_font_sampler'),
             'manage_options',
             'variable-font-sampler',
-            array($this, 'admin_page')
+            array($this, 'varifosa_admin_page')
         );
     }
     
-    public function admin_init() {
+    public function varifosa_admin_init() {
         // Register settings with proper sanitization callbacks
-        register_setting('vfs_settings', 'vfs_default_font', array(
+        register_setting('varifosa_settings', 'varifosa_default_font', array(
             'type' => 'string',
-            'sanitize_callback' => array($this, 'sanitize_font_url'),
+            'sanitize_callback' => array($this, 'varifosa_sanitize_font_url'),
             'default' => ''
         ));
         
-        register_setting('vfs_settings', 'vfs_custom_fonts', array(
+        register_setting('varifosa_settings', 'varifosa_custom_fonts', array(
             'type' => 'array',
-            'sanitize_callback' => array($this, 'sanitize_custom_fonts'),
+            'sanitize_callback' => array($this, 'varifosa_sanitize_custom_fonts'),
             'default' => array()
         ));
         
         add_settings_section(
-            'vfs_main_section',
+            'varifosa_main_section',
             esc_html__('Font Settings', 'variable_font_sampler'),
-            array($this, 'settings_section_callback'),
+            array($this, 'varifosa_settings_section_callback'),
             'variable-font-sampler'
         );
         
         add_settings_field(
-            'vfs_default_font',
+            'varifosa_default_font',
             esc_html__('Default Font URL', 'variable_font_sampler'),
-            array($this, 'default_font_callback'),
+            array($this, 'varifosa_default_font_callback'),
             'variable-font-sampler',
-            'vfs_main_section'
+            'varifosa_main_section'
         );
         
         add_settings_field(
-            'vfs_custom_fonts',
+            'varifosa_custom_fonts',
             esc_html__('Custom Fonts', 'variable_font_sampler'),
-            array($this, 'custom_fonts_callback'),
+            array($this, 'varifosa_custom_fonts_callback'),
             'variable-font-sampler',
-            'vfs_main_section'
+            'varifosa_main_section'
         );
     }
     
     /**
      * Sanitize font URL
      */
-    public function sanitize_font_url($input) {
+    public function varifosa_sanitize_font_url($input) {
         if (empty($input)) {
             return '';
         }
@@ -210,11 +210,11 @@ class VariableFontSampler {
         
         if (!in_array(strtolower($file_extension), $allowed_extensions)) {
             add_settings_error(
-                'vfs_default_font',
+                'varifosa_default_font',
                 'invalid_font_url',
                 esc_html__('Invalid font file. Please upload a valid font file (.woff, .woff2, .ttf, .otf, .eot)', 'variable_font_sampler')
             );
-            return get_option('vfs_default_font', '');
+            return get_option('varifosa_default_font', '');
         }
         
         return $url;
@@ -223,7 +223,7 @@ class VariableFontSampler {
     /**
      * Sanitize custom fonts array
      */
-    public function sanitize_custom_fonts($input) {
+    public function varifosa_sanitize_custom_fonts($input) {
         if (!is_array($input)) {
             return array();
         }
@@ -254,7 +254,7 @@ class VariableFontSampler {
         return $sanitized;
     }
     
-    public function admin_page() {
+    public function varifosa_admin_page() {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Variable Font Sampler Settings', 'variable_font_sampler'); ?></h1>
@@ -274,7 +274,7 @@ class VariableFontSampler {
             
             <form method="post" action="options.php">
                 <?php
-                settings_fields('vfs_settings');
+                settings_fields('varifosa_settings');
                 do_settings_sections('variable-font-sampler');
                 submit_button();
                 ?>
@@ -283,40 +283,40 @@ class VariableFontSampler {
         <?php
     }
     
-    public function settings_section_callback() {
+    public function varifosa_settings_section_callback() {
         echo '<p>' . esc_html__('Configure your variable font settings below.', 'variable_font_sampler') . '</p>';
     }
     
-    public function default_font_callback() {
-        $value = get_option('vfs_default_font', '');
-        echo '<input type="url" name="vfs_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
+    public function varifosa_default_font_callback() {
+        $value = get_option('varifosa_default_font', '');
+        echo '<input type="url" name="varifosa_default_font" value="' . esc_attr($value) . '" class="regular-text" />';
         echo '<button type="button" class="button upload-font-btn">' . esc_html__('Upload Font', 'variable_font_sampler') . '</button>';
         echo '<p class="description">' . esc_html__('Enter the URL to your default variable font file (.woff2, .woff, .ttf)', 'variable_font_sampler') . '</p>';
     }
     
-    public function custom_fonts_callback() {
-        $fonts = get_option('vfs_custom_fonts', array());
+    public function varifosa_custom_fonts_callback() {
+        $fonts = get_option('varifosa_custom_fonts', array());
         echo '<div id="custom-fonts-container">';
         
         if (!empty($fonts)) {
             foreach ($fonts as $index => $font) {
-                $this->render_font_input($index, $font);
+                $this->varifosa_render_font_input($index, $font);
             }
         } else {
-            $this->render_font_input(0, array('name' => '', 'url' => ''));
+            $this->varifosa_render_font_input(0, array('name' => '', 'url' => ''));
         }
         
         echo '</div>';
         echo '<button type="button" class="button add-font-btn">' . esc_html__('Add Another Font', 'variable_font_sampler') . '</button>';
     }
     
-    private function render_font_input($index, $font) {
+    private function varifosa_render_font_input($index, $font) {
         ?>
         <div class="font-input-group">
-            <input type="text" name="vfs_custom_fonts[<?php echo esc_attr($index); ?>][name]" 
+            <input type="text" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][name]" 
                    value="<?php echo esc_attr($font['name']); ?>" 
                    placeholder="<?php esc_attr_e('Font Name', 'variable_font_sampler'); ?>" />
-            <input type="url" name="vfs_custom_fonts[<?php echo esc_attr($index); ?>][url]" 
+            <input type="url" name="varifosa_custom_fonts[<?php echo esc_attr($index); ?>][url]" 
                    value="<?php echo esc_attr($font['url']); ?>" 
                    placeholder="<?php esc_attr_e('Font URL', 'variable_font_sampler'); ?>" />
             <button type="button" class="button remove-font-btn"><?php esc_html_e('Remove', 'variable_font_sampler'); ?></button>
@@ -324,7 +324,7 @@ class VariableFontSampler {
         <?php
     }
     
-    public function activate() {
+    public function varifosa_activate() {
         // Create assets directory structure
         $upload_dir = wp_upload_dir();
         $font_dir = $upload_dir['basedir'] . '/variable-fonts/';
@@ -334,20 +334,20 @@ class VariableFontSampler {
         }
         
         // Create CSS file
-        $this->create_css_file();
+        $this->varifosa_create_css_file();
         
         // Create JS file
-        $this->create_js_file();
+        $this->varifosa_create_js_file();
         
         // Create admin JS file
-        $this->create_admin_js_file();
+        $this->varifosa_create_admin_js_file();
     }
     
-    public function deactivate() {
+    public function varifosa_deactivate() {
         // Clean up if needed
     }
     
-    private function create_css_file() {
+    private function varifosa_create_css_file() {
         $css_dir = $this->plugin_path . 'assets/css/';
         if (!file_exists($css_dir)) {
             wp_mkdir_p($css_dir);
@@ -455,7 +455,7 @@ class VariableFontSampler {
         file_put_contents($css_dir . 'font-sampler.css', $css_content);
     }
     
-    private function create_js_file() {
+    private function varifosa_create_js_file() {
         $js_dir = $this->plugin_path . 'assets/js/';
         if (!file_exists($js_dir)) {
             wp_mkdir_p($js_dir);
@@ -573,7 +573,7 @@ jQuery(document).ready(function($) {
         file_put_contents($js_dir . 'font-sampler.js', $js_content);
     }
     
-    private function create_admin_js_file() {
+    private function varifosa_create_admin_js_file() {
         $js_dir = $this->plugin_path . 'assets/js/';
         if (!file_exists($js_dir)) {
             wp_mkdir_p($js_dir);
@@ -620,9 +620,9 @@ jQuery(document).ready(function($) {
     $(".add-font-btn").on("click", function() {
         var newFontGroup = `
             <div class="font-input-group">
-                <input type="text" name="vfs_custom_fonts[${fontIndex}][name]" 
+                <input type="text" name="varifosa_custom_fonts[${fontIndex}][name]" 
                        placeholder="Font Name" />
-                <input type="url" name="vfs_custom_fonts[${fontIndex}][url]" 
+                <input type="url" name="varifosa_custom_fonts[${fontIndex}][url]" 
                        placeholder="Font URL" />
                 <button type="button" class="button remove-font-btn">Remove</button>
             </div>
@@ -644,6 +644,6 @@ jQuery(document).ready(function($) {
 }
 
 // Initialize the plugin
-new VariableFontSampler();
+new Varifosa_Sampler();
 
 ?>
