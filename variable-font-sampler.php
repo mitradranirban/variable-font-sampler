@@ -48,8 +48,6 @@ class Varifosa_Sampler {
     
     public function varifosa_init() {
         // Initialize plugin
-        load_plugin_textdomain('variable-font-sampler', false, dirname(plugin_basename(__FILE__)) . '/languages');
-    }
     
     public function varifosa_enqueue_scripts() {
         // Enqueue our custom font sampler script and CSS from uploads directory
