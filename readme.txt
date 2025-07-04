@@ -24,13 +24,9 @@ Visit the <a href="https://github.com/mitradranirban/variable-font-sampler">plug
     
 2.  <b>Interactive Controls</b>: Sliders for font size, weight, width, and text input
     
-3.  <b>Admin Panel</b>: Settings page to configure default fonts and manage custom fonts
+3.  <b>Responsive Design</b>: Mobile-friendly interface
     
-4.  <b>Font Upload</b>: Media library integration for uploading font files
-    
-5.  <b>Responsive Design</b>: Mobile-friendly interface
-    
-6.  <b>Variable Font Support</b>: Specifically designed for variable fonts with multiple axes
+4.  <b>Variable Font Support</b>: Specifically designed for variable fonts with multiple axes
     
 
 == Usage: ==
@@ -46,13 +42,10 @@ Visit the <a href="https://github.com/mitradranirban/variable-font-sampler">plug
 
 == Features of the Plugin ==
 
-*   <b>Font Loading</b>: Uses the Font Loading API for reliable font loading
-    
+
 *   <b>Variable Font Controls</b>: Interactive sliders for weight, width, and size
     
 *   <b>Custom Text</b>: Users can change the sample text in real-time
-    
-*   <b>Admin Interface</b>: Easy-to-use settings panel for managing fonts
     
 *   <b>Error Handling</b>: Graceful fallbacks when fonts fail to load
     
