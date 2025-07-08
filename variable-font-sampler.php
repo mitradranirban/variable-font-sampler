@@ -48,7 +48,7 @@ class Varifosa_Sampler {
     
     public function varifosa_init() {
         // Initialize plugin
-    
+    }
     public function varifosa_enqueue_scripts() {
         // Enqueue our custom font sampler script and CSS from uploads directory
         $upload_dir = wp_upload_dir();
