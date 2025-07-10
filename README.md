@@ -12,13 +12,9 @@
     
 2.  **Interactive Controls**: Sliders for font size, weight, width, and text input
     
-3.  **Admin Panel**: Settings page to configure default fonts and manage custom fonts
+3.  **Responsive Design**: Mobile-friendly interface
     
-4.  **Font Upload**: Media library integration for uploading font files
-    
-5.  **Responsive Design**: Mobile-friendly interface
-    
-6.  **Variable Font Support**: Specifically designed for variable fonts with multiple axes
+4.  **Variable Font Support**: Specifically designed for variable fonts with multiple axes
     
 
 ## Usage:
@@ -37,24 +33,19 @@
 
 ## Installation Instructions:
 
-1.  Create a new folder called `variable-font-sampler` in your `/wp-content/plugins/` directory
-    
-2.  Save the code as `variable-font-sampler.php` in that folder
-    
-3.  Activate the plugin from your WordPress admin panel
-    
-4.  Go to Settings → Font Sampler to configure default fonts
+1.  Go to your WordPress admin panel, go to Plugins > Add Plugin
+2.  Search for Variable font sampler
+3.  Look for this logo ![varifosa](assets/icon-128x128.png)
+4.  Press install button
+5.  Activate the plugin 
     
 
 ## Features of the Plugin:
 
-*   **Font Loading**: Uses the Font Loading API for reliable font loading
     
 *   **Variable Font Controls**: Interactive sliders for weight, width, and size
     
 *   **Custom Text**: Users can change the sample text in real-time
-    
-*   **Admin Interface**: Easy-to-use settings panel for managing fonts
     
 *   **Error Handling**: Graceful fallbacks when fonts fail to load
     
